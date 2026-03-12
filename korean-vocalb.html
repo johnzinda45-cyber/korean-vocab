@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="한국어 단어장">
+<title>한국어 단어장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d14;
+  --surface: rgba(255,255,255,0.045);
+  --surface2: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.09);
+  --text: #f0ede8;
+  --muted: #7a7a8a;
+  --accent: #c8f0a0;
+  --accent2: #f0c8a0;
+  --accent3: #a0c8f0;
+  --accent4: #f0a0c8;
+  --danger: #f07070;
+  --nav-h: 72px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: 'Gowun Dodum', serif; color: var(--text); display: flex; flex-direction: column; height: 100dvh; }
+body::before { content: ''; position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(200,240,160,0.06) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 90%, rgba(160,200,240,0.07) 0%, transparent 60%), radial-gradient(ellipse 50% 40% at 60% 40%, rgba(240,160,200,0.04) 0%, transparent 50%); pointer-events: none; }
+
+/* ── LOGIN ── */
+#login-screen { position: fixed; inset: 0; z-index: 999; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 24px; animation: fadeIn 0.4s ease; }
+#login-screen::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 30% 20%, rgba(200,240,160,0.08) 0%, transparent 60%), radial-gradient(ellipse 60% 70% at 70% 80%, rgba(160,200,240,0.09) 0%, transparent 60%); pointer-events: none; }
+.login-box { position: relative; z-index: 1; width: 100%; max-width: 380px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 28px; padding: 36px 28px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.login-title { font-family: 'DM Serif Display', serif; font-size: 32px; font-style: italic; background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; margin-bottom: 4px; }
+.login-sub { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 32px; font-family: 'DM Mono', monospace; }
+.login-label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.6px; text-transform: uppercase; display: block; margin-bottom: 6px; }
+.login-input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; color: var(--text); font-size: 16px; font-family: 'Gowun Dodum', serif; outline: none; transition: border-color 0.2s; margin-bottom: 16px; -webkit-appearance: none; }
+.login-input:focus { border-color: var(--accent); }
+.login-btn { width: 100%; background: var(--accent); border: none; border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700; font-family: 'Gowun Dodum', serif; color: #0d0d14; cursor: pointer; transition: all 0.18s; margin-top: 4px; }
+.login-btn:active { transform: scale(0.97); }
+.login-btn.secondary { background: var(--surface2); color: var(--text); margin-top: 8px; }
+.login-error { background: rgba(240,112,112,0.1); border: 1px solid rgba(240,112,112,0.3); border-radius: 12px; padding: 12px 14px; color: var(--danger); font-size: 13px; margin-bottom: 14px; display: none; text-align: center; }
+.login-attempts { text-align: center; font-size: 12px; color: var(--muted); margin-top: 14px; font-family: 'DM Mono', monospace; }
+.change-pw-link { text-align: center; font-size: 12px; color: var(--accent3); margin-top: 12px; cursor: pointer; font-family: 'DM Mono', monospace; text-decoration: underline; }
+.cpw-panel { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+.cpw-success { text-align: center; color: var(--accent); font-size: 13px; margin-top: 10px; font-family: 'DM Mono', monospace; display: none; }
+.login-hint { position: relative; z-index: 1; text-align: center; margin-top: 20px; color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace; line-height: 1.8; }
+
+/* ── MAIN ── */
+#main-app { display: none; flex: 1; flex-direction: column; height: 100dvh; }
+#main-app.visible { display: flex; }
+#app { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; z-index: 1; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); }
+
+/* ── HEADER ── */
+.header { position: sticky; top: 0; z-index: 50; padding: 16px 20px 12px; background: rgba(13,13,20,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.header-center { flex: 1; text-align: center; }
+.header h1 { font-family: 'DM Serif Display', serif; font-size: 22px; font-style: italic; background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent4)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header p { font-size: 11px; color: var(--muted); margin-top: 1px; font-family: 'DM Mono', monospace; }
+.lock-btn { background: none; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 12px; padding: 6px 10px; cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.2s; flex-shrink: 0; }
+.lock-btn:active { border-color: var(--danger); color: var(--danger); }
+
+/* ── NAV ── */
+.nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; height: calc(var(--nav-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: rgba(13,13,20,0.92); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-top: 1px solid var(--border); display: flex; align-items: stretch; }
+.nav-btn { flex: 1; border: none; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--muted); transition: color 0.2s; padding: 8px 4px; }
+.nav-btn.active { color: var(--accent); }
+.nav-btn .icon { font-size: 22px; }
+.nav-btn .lbl { font-size: 10px; font-family: 'DM Mono', monospace; font-weight: 500; letter-spacing: 0.3px; }
+
+/* ── VIEWS ── */
+.view { display: none; padding: 20px 18px; animation: fadeIn 0.25s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── CARD ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 14px; }
+.card-title { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+
+/* ── INPUTS ── */
+.ilabel { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; margin-bottom: 5px; display: block; text-transform: uppercase; }
+input[type=text], input[type=password], select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; color: var(--text); font-size: 16px; font-family: 'Gowun Dodum', serif; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+input[type=text]:focus, input[type=password]:focus, select:focus { border-color: var(--accent); }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+select option { background: #1a1a2e; }
+.ig { margin-bottom: 12px; }
+
+/* ── BUTTONS ── */
+.btn { display: block; width: 100%; border: none; border-radius: 14px; padding: 15px; font-size: 15px; font-weight: 600; font-family: 'Gowun Dodum', serif; cursor: pointer; transition: all 0.18s; text-align: center; }
+.btn:active { transform: scale(0.97); }
+.btn-g { background: var(--accent); color: #0d0d14; }
+.btn-s { background: var(--surface2); color: var(--text); }
+.btn-d { background: rgba(240,112,112,0.15); color: var(--danger); border: 1px solid rgba(240,112,112,0.3); }
+.btn-b { background: var(--accent3); color: #0d0d14; }
+
+/* ── POS TAG ── */
+.ptag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+/* ── WORD CARD ── */
+.wcard { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 10px; transition: transform 0.15s; }
+.wcard:active { transform: scale(0.99); }
+
+/* ── AUDIO BTN ── */
+.abtn { display: inline-flex; align-items: center; gap: 5px; background: rgba(160,200,240,0.12); border: 1px solid rgba(160,200,240,0.3); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: var(--accent3); cursor: pointer; font-family: 'DM Mono', monospace; font-weight: 500; transition: all 0.15s; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.abtn:active { transform: scale(0.96); background: rgba(160,200,240,0.22); }
+
+/* ── STATS ── */
+.sgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.sbox { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 8px; text-align: center; }
+.snum { font-family: 'DM Serif Display', serif; font-size: 32px; }
+.slbl { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+/* ── EXERCISE ── */
+.excard { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 36px 24px; text-align: center; margin-bottom: 16px; }
+.exkr { font-family: 'DM Serif Display', serif; font-size: 52px; line-height: 1.1; }
+.exrom { font-size: 16px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 8px; }
+.exen { font-family: 'DM Serif Display', serif; font-size: 32px; font-style: italic; }
+.prog { height: 4px; background: var(--surface2); border-radius: 2px; margin-bottom: 20px; overflow: hidden; }
+.progf { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 2px; transition: width 0.4s ease; }
+.mcopt { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; cursor: pointer; font-size: 16px; text-align: left; transition: all 0.15s; width: 100%; color: var(--text); font-family: 'Gowun Dodum', serif; }
+.mcopt:active { transform: scale(0.98); }
+.mcopt.ok { background: rgba(200,240,160,0.12); border-color: var(--accent); color: var(--accent); }
+.mcopt.no { background: rgba(240,112,112,0.1); border-color: var(--danger); color: var(--danger); }
+.rbanner { text-align: center; font-size: 17px; font-weight: 700; padding: 14px; border-radius: 14px; margin-bottom: 14px; }
+.rok { background: rgba(200,240,160,0.1); color: var(--accent); }
+.rno { background: rgba(240,112,112,0.1); color: var(--danger); }
+.etcard { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 12px; cursor: pointer; display: flex; align-items: center; gap: 16px; transition: all 0.18s; }
+.etcard:active { transform: scale(0.98); }
+
+/* ── HOME ── */
+.hero { text-align: center; padding: 24px 0 18px; }
+.hero .hemoji { font-size: 56px; margin-bottom: 10px; display: block; }
+.hero h2 { font-family: 'DM Serif Display', serif; font-size: 22px; font-style: italic; margin-bottom: 5px; }
+.hero p { color: var(--muted); font-size: 14px; }
+.rword { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.rword:last-child { border-bottom: none; }
+
+/* ── BARS ── */
+.brow { margin-bottom: 10px; }
+.blabel { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.btrack { height: 7px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.bfill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+/* ── MASTERY DOTS ── */
+.mdots { display: flex; gap: 3px; margin-top: 6px; align-items: center; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── TOAST ── */
+#toast { position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #0d0d14; padding: 10px 22px; border-radius: 30px; font-size: 14px; font-weight: 700; opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap; pointer-events: none; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── MODAL ── */
+.moverlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); display: flex; align-items: flex-end; animation: oin 0.2s ease; }
+@keyframes oin { from { opacity: 0; } to { opacity: 1; } }
+.modal { background: #1a1a26; border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + var(--safe-bottom)); width: 100%; max-height: 90dvh; overflow-y: auto; animation: sup 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes sup { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.mhandle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+
+/* ── DONE ── */
+.done { text-align: center; padding: 40px 20px; }
+.donescore { font-family: 'DM Serif Display', serif; font-size: 72px; color: var(--accent); line-height: 1; }
+.donelbl { font-size: 18px; color: var(--muted); margin: 8px 0 28px; }
+
+/* ── EMPTY ── */
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty .ei { font-size: 44px; margin-bottom: 12px; }
+
+::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ LOGIN ════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-title">한국어 단어장</div>
+    <div class="login-sub">Korean Vocabulary Journal</div>
+
+    <div id="lp-main">
+      <div id="login-error" class="login-error"></div>
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" id="login-pw" placeholder="Enter your password" autocomplete="current-password">
+      <button class="login-btn" onclick="doLogin()">🔓 Unlock App</button>
+      <div class="login-attempts" id="attempts-lbl"></div>
+      <div class="change-pw-link" onclick="toggleCPW(false)">⚙️ Change password</div>
+    </div>
+
+    <div id="lp-cpw" class="cpw-panel">
+      <div class="card-title" style="margin-bottom:12px">Change Password</div>
+      <div id="cpw-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+      <label class="login-label">Current Password</label>
+      <input class="login-input" type="password" id="cpw-cur" placeholder="Current password" autocomplete="current-password">
+      <label class="login-label">New Password</label>
+      <input class="login-input" type="password" id="cpw-new" placeholder="Min 4 characters" autocomplete="new-password">
+      <label class="login-label">Confirm New Password</label>
+      <input class="login-input" type="password" id="cpw-con" placeholder="Confirm new password" autocomplete="new-password">
+      <button class="login-btn" onclick="doChangePW()">💾 Save New Password</button>
+      <button class="login-btn secondary" onclick="toggleCPW(true)">Cancel</button>
+      <div id="cpw-ok" class="cpw-success">✅ Password updated! Please log in.</div>
+    </div>
+  </div>
+  <div class="login-hint">
+    🔒 Private — only you can access this<br>
+    Default password: <span style="color:var(--accent)">korean2024</span>
+  </div>
+</div>
+
+<!-- ════════════════════ APP ════════════════════ -->
+<div id="main-app">
+  <div id="app">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div style="width:58px"></div>
+      <div class="header-center">
+        <h1>한국어 단어장</h1>
+        <p id="wc-lbl">Korean Vocabulary Journal</p>
+      </div>
+      <button class="lock-btn" onclick="doLogout()">Lock 🔒</button>
+    </div>
+
+    <!-- HOME -->
+    <div class="view active" id="view-home">
+      <div class="hero">
+        <span class="hemoji">🇰🇷</span>
+        <h2>안녕하세요!</h2>
+        <p>Welcome back to your vocabulary journal</p>
+      </div>
+      <div class="sgrid">
+        <div class="sbox"><div class="snum" id="s-tot" style="color:var(--accent)">0</div><div class="slbl">Total</div></div>
+        <div class="sbox"><div class="snum" id="s-mas" style="color:var(--accent2)">0</div><div class="slbl">Mastered</div></div>
+        <div class="sbox"><div class="snum" id="s-tod" style="color:var(--accent4)">0</div><div class="slbl">Today</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Recent Words</div>
+        <div id="recent-list"><div class="empty"><div class="ei">📭</div>No words yet! Tap ➕ to begin.</div></div>
+      </div>
+      <button class="btn btn-g" onclick="goTo('add')">➕ Add New Word</button>
+      <div style="height:10px"></div>
+      <button class="btn btn-b" onclick="goTo('exercise')">🎯 Start Practice</button>
+    </div>
+
+    <!-- ADD -->
+    <div class="view" id="view-add">
+      <div class="card">
+        <div class="card-title" id="add-title">Add New Word</div>
+        <div class="ig"><label class="ilabel">Korean 한국어 *</label><input type="text" id="f-kr" placeholder="한국어 단어" autocomplete="off"></div>
+        <div class="ig"><label class="ilabel">Romanization</label><input type="text" id="f-rom" placeholder="e.g. hanguk" autocomplete="off"></div>
+        <div class="ig"><label class="ilabel">English Meaning *</label><input type="text" id="f-en" placeholder="English translation" autocomplete="off"></div>
+        <div class="ig">
+          <label class="ilabel">Part of Speech</label>
+          <select id="f-pos">
+            <option value="noun">📦 Noun 명사</option>
+            <option value="verb">⚡ Verb 동사</option>
+            <option value="adj">🌈 Adjective 형용사</option>
+            <option value="adv">💨 Adverb 부사</option>
+            <option value="particle">🔗 Particle 조사</option>
+            <option value="expr">💬 Expression 표현</option>
+            <option value="num">🔢 Number 숫자</option>
+            <option value="pronoun">👤 Pronoun 대명사</option>
+            <option value="conj">🔀 Conjunction 접속사</option>
+          </select>
+        </div>
+        <div class="ig"><label class="ilabel">Notes / Example</label><input type="text" id="f-note" placeholder="Notes or example sentence..." autocomplete="off"></div>
+        <div id="f-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;display:none"></div>
+        <button class="btn btn-g" id="sub-btn" onclick="submitWord()">➕ Add Word</button>
+        <div style="height:8px"></div>
+        <button class="btn btn-s" id="can-btn" style="display:none" onclick="cancelEdit()">Cancel</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Parts of Speech Guide</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px" id="pos-guide"></div>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="view" id="view-library">
+      <input type="text" id="srch" placeholder="🔍 Search Korean, English, romanization..." oninput="renderLib()" autocomplete="off" style="margin-bottom:10px">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select id="fpos" onchange="renderLib()" style="flex:1">
+          <option value="all">All Parts of Speech</option>
+          <option value="noun">📦 Noun</option><option value="verb">⚡ Verb</option>
+          <option value="adj">🌈 Adjective</option><option value="adv">💨 Adverb</option>
+          <option value="particle">🔗 Particle</option><option value="expr">💬 Expression</option>
+          <option value="num">🔢 Number</option><option value="pronoun">👤 Pronoun</option>
+          <option value="conj">🔀 Conjunction</option>
+        </select>
+        <select id="fsort" onchange="renderLib()" style="flex:1">
+          <option value="date">Newest</option>
+          <option value="alpha">A→Z Korean</option>
+          <option value="mastery">By Mastery</option>
+        </select>
+      </div>
+      <div id="lib-cnt" style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px"></div>
+      <div id="lib-list"></div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="view" id="view-exercise">
+      <div id="ex-pick">
+        <div class="card-title" style="margin-bottom:16px">Practice Mode</div>
+        <div id="ex-warn" style="display:none" class="card"><p style="color:var(--accent2);font-size:14px">⚠️ Add at least 4 words to unlock all modes.</p></div>
+        <div class="etcard" onclick="startEx('flashcard')"><div style="font-size:38px;flex-shrink:0">🃏</div><div><div style="font-weight:700;font-size:16px">Flashcards</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Korean → flip to see English + audio</div></div><div style="margin-left:auto;font-size:18px;color:var(--muted)">›</div></div>
+        <div class="etcard" onclick="startEx('mc')"><div style="font-size:38px;flex-shrink:0">🎲</div><div><div style="font-weight:700;font-size:16px">Multiple Choice</div><div style="font-size:13px;color:var(--muted);margin-top:2px">Pick the correct English meaning</div></div><div style="margin-left:auto;font-size:18px;color:var(--muted)">›</div></div>
+        <div class="etcard" onclick="startEx('typing')"><div style="font-size:38px;flex-shrink:0">⌨️</div><div><div style="font-weight:700;font-size:16px">Type English</div><div style="font-size:13px;color:var(--muted);margin-top:2px">See Korean, type the meaning</div></div><div style="margin-left:auto;font-size:18px;color:var(--muted)">›</div></div>
+        <div class="etcard" onclick="startEx('kr')"><div style="font-size:38px;flex-shrink:0">✍️</div><div><div style="font-weight:700;font-size:16px">Type Korean</div><div style="font-size:13px;color:var(--muted);margin-top:2px">See English, type the Korean word</div></div><div style="margin-left:auto;font-size:18px;color:var(--muted)">›</div></div>
+      </div>
+      <div id="ex-sess" style="display:none"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="view" id="view-stats">
+      <div class="card">
+        <div class="card-title">Overview</div>
+        <div class="sgrid" style="margin-bottom:0">
+          <div class="sbox"><div class="snum" id="st-tot" style="color:var(--accent)">0</div><div class="slbl">Words</div></div>
+          <div class="sbox"><div class="snum" id="st-mas" style="color:var(--accent2)">0</div><div class="slbl">Mastered</div></div>
+          <div class="sbox"><div class="snum" id="st-new" style="color:var(--accent4)">0</div><div class="slbl">New</div></div>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">By Part of Speech</div><div id="pos-chart"></div></div>
+      <div class="card"><div class="card-title">Mastery Levels</div><div id="mast-chart"></div></div>
+      <div class="card">
+        <div class="card-title">⚙️ Settings</div>
+        <label class="ilabel" style="margin-bottom:8px">Change App Password</label>
+        <div id="s-cpw-err" style="color:var(--danger);font-size:13px;margin-bottom:8px;display:none"></div>
+        <input type="password" id="s-cur" placeholder="Current password" style="margin-bottom:8px" autocomplete="current-password">
+        <input type="password" id="s-new" placeholder="New password (min 4 chars)" style="margin-bottom:8px" autocomplete="new-password">
+        <input type="password" id="s-con" placeholder="Confirm new password" style="margin-bottom:10px" autocomplete="new-password">
+        <button class="btn btn-s" onclick="doChangePWSettings()" style="padding:11px;margin-bottom:16px">💾 Update Password</button>
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+          <label class="ilabel" style="margin-bottom:8px">Danger Zone</label>
+          <button class="btn btn-d" onclick="clearAllData()">🗑️ Clear All Vocabulary Data</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-home" onclick="goTo('home')"><span class="icon">🏠</span><span class="lbl">HOME</span></button>
+    <button class="nav-btn" id="nav-add" onclick="goTo('add')"><span class="icon">➕</span><span class="lbl">ADD</span></button>
+    <button class="nav-btn" id="nav-library" onclick="goTo('library')"><span class="icon">📚</span><span class="lbl">LIBRARY</span></button>
+    <button class="nav-btn" id="nav-exercise" onclick="goTo('exercise')"><span class="icon">🎯</span><span class="lbl">PRACTICE</span></button>
+    <button class="nav-btn" id="nav-stats" onclick="goTo('stats')"><span class="icon">📊</span><span class="lbl">STATS</span></button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<div id="moverlay" style="display:none" class="moverlay" onclick="closeModal(event)">
+  <div class="modal"><div class="mhandle"></div><div id="mbody"></div></div>
+</div>
+
+<script>
+/* ═══════ AUTH ═══════ */
+const DEFAULT_PW = 'korean2024';
+const MAX_ATT = 5;
+const LOCK_MS = 5 * 60 * 1000;
+
+const getPW = () => localStorage.getItem('kr_pw') || DEFAULT_PW;
+const setPW = pw => localStorage.setItem('kr_pw', pw);
+const getAtt = () => parseInt(localStorage.getItem('kr_att') || '0');
+const setAtt = n => localStorage.setItem('kr_att', n);
+const getLock = () => parseInt(localStorage.getItem('kr_lock') || '0');
+const setLock = t => localStorage.setItem('kr_lock', t);
+const isAuth = () => sessionStorage.getItem('kr_a') === '1';
+const setAuth = () => sessionStorage.setItem('kr_a', '1');
+const clearAuth = () => sessionStorage.removeItem('kr_a');
+
+function doLogin() {
+  const now = Date.now();
+  const lock = getLock();
+  if (lock && now < lock) {
+    const m = Math.ceil((lock - now) / 60000);
+    setErr(`Too many attempts. Try again in ${m} min.`);
+    return;
+  }
+  const pw = document.getElementById('login-pw').value;
+  if (pw === getPW()) {
+    setAtt(0); setLock(0); setAuth();
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').classList.add('visible');
+    document.getElementById('login-pw').value = '';
+    loadWords(); populatePOSGuide(); renderHome();
+  } else {
+    const att = getAtt() + 1;
+    setAtt(att);
+    const rem = MAX_ATT - att;
+    if (att >= MAX_ATT) { setLock(Date.now() + LOCK_MS); setAtt(0); setErr('Too many attempts. Locked 5 mins.'); }
+    else { setErr(`Wrong password. ${rem} attempt${rem !== 1 ? 's' : ''} left.`); }
+    document.getElementById('attempts-lbl').textContent = att >= 3 ? `⚠️ ${MAX_ATT - att} attempts remaining` : '';
+  }
+}
+
+function doLogout() {
+  clearAuth();
+  document.getElementById('main-app').classList.remove('visible');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('lp-main').style.display = 'block';
+  document.getElementById('lp-cpw').style.display = 'none';
+}
+
+function setErr(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+function toggleCPW(showMain) {
+  document.getElementById('lp-main').style.display = showMain ? 'block' : 'none';
+  document.getElementById('lp-cpw').style.display = showMain ? 'none' : 'block';
+  document.getElementById('cpw-err').style.display = 'none';
+  document.getElementById('cpw-ok').style.display = 'none';
+}
+
+function doChangePW() {
+  const cur = document.getElementById('cpw-cur').value;
+  const nw = document.getElementById('cpw-new').value;
+  const cn = document.getElementById('cpw-con').value;
+  const err = document.getElementById('cpw-err');
+  if (cur !== getPW()) { err.textContent = 'Current password is wrong.'; err.style.display='block'; return; }
+  if (nw.length < 4) { err.textContent = 'Password must be at least 4 characters.'; err.style.display='block'; return; }
+  if (nw !== cn) { err.textContent = 'Passwords do not match.'; err.style.display='block'; return; }
+  setPW(nw);
+  err.style.display = 'none';
+  ['cpw-cur','cpw-new','cpw-con'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('cpw-ok').style.display = 'block';
+  setTimeout(() => toggleCPW(true), 1800);
+}
+
+function doChangePWSettings() {
+  const cur = document.getElementById('s-cur').value;
+  const nw = document.getElementById('s-new').value;
+  const cn = document.getElementById('s-con').value;
+  const err = document.getElementById('s-cpw-err');
+  if (cur !== getPW()) { err.textContent = 'Current password is wrong.'; err.style.display='block'; return; }
+  if (nw.length < 4) { err.textContent = 'Must be at least 4 characters.'; err.style.display='block'; return; }
+  if (nw !== cn) { err.textContent = 'Passwords do not match.'; err.style.display='block'; return; }
+  setPW(nw);
+  err.style.display = 'none';
+  ['s-cur','s-new','s-con'].forEach(id => document.getElementById(id).value = '');
+  showToast('✅ Password updated!');
+}
+
+function clearAllData() {
+  if (confirm('⚠️ Delete ALL vocabulary words? This cannot be undone.')) {
+    words = []; saveWords(); renderHome(); renderLib(); showToast('🗑️ All data cleared');
+  }
+}
+
+/* ═══════ DATA ═══════ */
+const POS = {
+  noun:     { label: 'Noun 명사',      emoji: '📦', color: '#4ECDC4' },
+  verb:     { label: 'Verb 동사',      emoji: '⚡', color: '#f07070' },
+  adj:      { label: 'Adj 형용사',     emoji: '🌈', color: '#FFD93D' },
+  adv:      { label: 'Adverb 부사',    emoji: '💨', color: '#a0f0a0' },
+  particle: { label: 'Particle 조사',  emoji: '🔗', color: '#C9B1FF' },
+  expr:     { label: 'Expr 표현',      emoji: '💬', color: '#FFB347' },
+  num:      { label: 'Number 숫자',    emoji: '🔢', color: '#87CEEB' },
+  pronoun:  { label: 'Pronoun 대명사', emoji: '👤', color: '#F0A0FF' },
+  conj:     { label: 'Conj 접속사',    emoji: '🔀', color: '#f0c890' },
+};
+const ML = ['🌱 New','🌿 Learning','🌳 Familiar','⭐ Good','🏆 Great','👑 Mastered'];
+const MC = ['#7a7a8a','#4ECDC4','#a0f0a0','#FFD93D','#FF9F43','#f07070'];
+
+let words = [], editingId = null, exState = null;
+
+function saveWords() { try { localStorage.setItem('kr_v3', JSON.stringify(words)); } catch(e) {} }
+function loadWords() {
+  try {
+    const d = localStorage.getItem('kr_v3');
+    if (d) { words = JSON.parse(d); return; }
+    words = [
+      { id:'s1', korean:'사랑', romanization:'sarang', english:'love', pos:'noun', notes:'Very common!', dateAdded: Date.now()-86400000*3, mastery:2 },
+      { id:'s2', korean:'먹다', romanization:'meokda', english:'to eat', pos:'verb', notes:'', dateAdded: Date.now()-86400000*2, mastery:1 },
+      { id:'s3', korean:'예쁘다', romanization:'yeppeuda', english:'to be pretty', pos:'adj', notes:'', dateAdded: Date.now()-86400000, mastery:0 },
+      { id:'s4', korean:'한국', romanization:'hanguk', english:'Korea', pos:'noun', notes:'', dateAdded: Date.now(), mastery:3 },
+    ];
+    saveWords();
+  } catch(e) { words = []; }
+}
+
+/* ═══════ AUDIO ═══════ */
+function naverURL(kr) {
+  return `https://dict.naver.com/search.nhn?dicQuery=${encodeURIComponent(kr)}&query=${encodeURIComponent(kr)}&target=dic&ie=utf8&query_utf=&isOnlyViewEE=N`;
+}
+function abtn(kr) {
+  return `<a class="abtn" href="${naverURL(kr)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔊 Hear it</a>`;
+}
+
+/* ═══════ NAVIGATION ═══════ */
+function goTo(v) {
+  document.querySelector('.view.active')?.classList.remove('active');
+  document.querySelector('.nav-btn.active')?.classList.remove('active');
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('nav-'+v).classList.add('active');
+  document.getElementById('app').scrollTo({ top: 0 });
+  if (v === 'home') renderHome();
+  if (v === 'library') renderLib();
+  if (v === 'stats') renderStats();
+  if (v === 'exercise') renderExPick();
+  if (v === 'add' && !editingId) resetForm();
+}
+
+/* ═══════ HOME ═══════ */
+function renderHome() {
+  const today = new Date().toDateString();
+  document.getElementById('s-tot').textContent = words.length;
+  document.getElementById('s-mas').textContent = words.filter(w => w.mastery >= 4).length;
+  document.getElementById('s-tod').textContent = words.filter(w => new Date(w.dateAdded).toDateString() === today).length;
+  document.getElementById('wc-lbl').textContent = `${words.length} word${words.length !== 1 ? 's' : ''} · Korean Vocab`;
+  const el = document.getElementById('recent-list');
+  const recent = [...words].sort((a,b) => b.dateAdded - a.dateAdded).slice(0, 6);
+  if (!words.length) { el.innerHTML = `<div class="empty"><div class="ei">📭</div>No words yet!</div>`; return; }
+  el.innerHTML = recent.map(w => {
+    const p = POS[w.pos] || {};
+    return `<div class="rword"><div><span style="font-size:20px;font-weight:700">${w.korean}</span>${w.romanization ? `<span style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:8px">${w.romanization}</span>` : ''}<div style="font-size:14px;color:#ccc;margin-top:1px">${w.english}</div></div><span class="ptag" style="background:${p.color||'#888'}22;color:${p.color||'#888'};border:1px solid ${p.color||'#888'}44">${p.emoji||'?'}</span></div>`;
+  }).join('');
+}
+
+/* ═══════ ADD/EDIT ═══════ */
+function resetForm() {
+  editingId = null;
+  ['f-kr','f-rom','f-en','f-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-pos').value = 'noun';
+  document.getElementById('f-err').style.display = 'none';
+  document.getElementById('add-title').textContent = 'Add New Word';
+  document.getElementById('sub-btn').textContent = '➕ Add Word';
+  document.getElementById('can-btn').style.display = 'none';
+}
+
+function populatePOSGuide() {
+  document.getElementById('pos-guide').innerHTML = Object.entries(POS).map(([k,v]) =>
+    `<span class="ptag" style="background:${v.color}22;color:${v.color};border:1px solid ${v.color}44">${v.emoji} ${v.label}</span>`
+  ).join('');
+}
+
+function submitWord() {
+  const kr = document.getElementById('f-kr').value.trim();
+  const en = document.getElementById('f-en').value.trim();
+  const errEl = document.getElementById('f-err');
+  if (!kr || !en) { errEl.textContent = 'Korean and English are required.'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  const w = { korean: kr, romanization: document.getElementById('f-rom').value.trim(), english: en, pos: document.getElementById('f-pos').value, notes: document.getElementById('f-note').value.trim() };
+  if (editingId) {
+    const i = words.findIndex(x => x.id === editingId);
+    if (i >= 0) words[i] = { ...words[i], ...w };
+    showToast('✅ Word updated!');
+    editingId = null;
+  } else {
+    words.push({ id: Date.now().toString(), ...w, dateAdded: Date.now(), mastery: 0 });
+    showToast('✅ Word added!');
+  }
+  saveWords(); resetForm();
+}
+
+function cancelEdit() { resetForm(); }
+
+function startEdit(id) {
+  closeModal();
+  const w = words.find(x => x.id === id);
+  if (!w) return;
+  editingId = id;
+  document.getElementById('f-kr').value = w.korean;
+  document.getElementById('f-rom').value = w.romanization || '';
+  document.getElementById('f-en').value = w.english;
+  document.getElementById('f-pos').value = w.pos;
+  document.getElementById('f-note').value = w.notes || '';
+  document.getElementById('add-title').textContent = 'Edit Word';
+  document.getElementById('sub-btn').textContent = '💾 Save Changes';
+  document.getElementById('can-btn').style.display = 'block';
+  goTo('add');
+}
+
+function deleteWord(id) {
+  words = words.filter(w => w.id !== id);
+  saveWords(); closeModal(); renderLib(); showToast('🗑️ Word deleted');
+}
+
+/* ═══════ LIBRARY ═══════ */
+function getFiltered() {
+  const q = (document.getElementById('srch')?.value || '').toLowerCase();
+  const pos = document.getElementById('fpos')?.value || 'all';
+  const sort = document.getElementById('fsort')?.value || 'date';
+  return words
+    .filter(w => pos === 'all' || w.pos === pos)
+    .filter(w => !q || w.korean.includes(q) || w.english.toLowerCase().includes(q) || (w.romanization||'').toLowerCase().includes(q))
+    .sort((a,b) => sort === 'date' ? b.dateAdded - a.dateAdded : sort === 'alpha' ? a.korean.localeCompare(b.korean) : b.mastery - a.mastery);
+}
+
+function renderLib() {
+  const f = getFiltered();
+  document.getElementById('lib-cnt').textContent = `${f.length} word${f.length !== 1 ? 's' : ''}`;
+  const el = document.getElementById('lib-list');
+  if (!f.length) { el.innerHTML = `<div class="empty"><div class="ei">🔍</div>No words found.</div>`; return; }
+  el.innerHTML = f.map(w => {
+    const p = POS[w.pos] || {};
+    return `<div class="wcard" onclick="openModal('${w.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <span style="font-size:26px;font-weight:700;letter-spacing:-0.5px">${w.korean}</span>
+          ${w.romanization ? `<span style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;font-style:italic"> · ${w.romanization}</span>` : ''}
+          <div style="font-size:16px;margin-top:3px">${w.english}</div>
+        </div>
+        <span class="ptag" style="background:${p.color||'#888'}22;color:${p.color||'#888'};border:1px solid ${p.color||'#888'}44;flex-shrink:0;margin-left:10px">${p.emoji||'?'} ${p.label||w.pos}</span>
+      </div>
+      ${w.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:5px">💡 ${w.notes}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:6px">
+        <div class="mdots">
+          ${[0,1,2,3,4,5].map(i => `<div class="dot" style="background:${i<=w.mastery?MC[w.mastery]:'var(--border)'}"></div>`).join('')}
+          <span style="font-size:11px;color:${MC[w.mastery]};font-family:'DM Mono',monospace;margin-left:5px">${ML[w.mastery]}</span>
+        </div>
+        ${abtn(w.korean)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════ MODAL ═══════ */
+function openModal(id) {
+  const w = words.find(x => x.id === id);
+  if (!w) return;
+  const p = POS[w.pos] || {};
+  document.getElementById('mbody').innerHTML = `
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-family:'DM Serif Display',serif;font-size:52px;font-style:italic">${w.korean}</div>
+      ${w.romanization ? `<div style="font-size:16px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:6px">${w.romanization}</div>` : ''}
+      <div style="font-size:24px;margin-top:10px">${w.english}</div>
+      <span class="ptag" style="background:${p.color||'#888'}22;color:${p.color||'#888'};border:1px solid ${p.color||'#888'}44;margin-top:10px">${p.emoji||'?'} ${p.label||w.pos}</span>
+      <div style="margin-top:14px">${abtn(w.korean)}</div>
+    </div>
+    ${w.notes ? `<div class="card" style="margin-bottom:16px"><div class="card-title">Notes</div>${w.notes}</div>` : ''}
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">Mastery</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        ${[0,1,2,3,4,5].map(i => `<div class="dot" style="width:10px;height:10px;background:${i<=w.mastery?MC[w.mastery]:'var(--border)'}"></div>`).join('')}
+        <span style="color:${MC[w.mastery]};font-size:13px;margin-left:4px">${ML[w.mastery]}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">Added ${new Date(w.dateAdded).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+    </div>
+    <button class="btn btn-s" style="margin-bottom:10px" onclick="startEdit('${w.id}')">✏️ Edit Word</button>
+    <button class="btn btn-d" onclick="deleteWord('${w.id}')">🗑️ Delete Word</button>
+    <div style="height:8px"></div>
+    <button class="btn btn-s" onclick="closeModal()">Close</button>
+  `;
+  document.getElementById('moverlay').style.display = 'flex';
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('moverlay')) return;
+  document.getElementById('moverlay').style.display = 'none';
+}
+
+/* ═══════ EXERCISE ═══════ */
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [b[i],b[j]] = [b[j],b[i]]; }
+  return b;
+}
+
+function renderExPick() {
+  document.getElementById('ex-pick').style.display = 'block';
+  document.getElementById('ex-sess').style.display = 'none';
+  document.getElementById('ex-warn').style.display = words.length < 4 ? 'block' : 'none';
+}
+
+function startEx(type) {
+  if (!words.length) { showToast('Add words first!'); return; }
+  exState = { type, words: shuffle(words).slice(0, 10), idx: 0, score: 0, total: 0, flipped: false, answered: false };
+  document.getElementById('ex-pick').style.display = 'none';
+  document.getElementById('ex-sess').style.display = 'block';
+  renderExCard();
+}
+
+function renderExCard() {
+  const s = exState;
+  if (s.idx >= s.words.length) { renderExDone(); return; }
+  const w = s.words[s.idx];
+  const p = POS[w.pos] || {};
+  const pct = (s.idx / s.words.length) * 100;
+
+  let h = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <button onclick="renderExPick()" style="background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:4px">← Back</button>
+      <span style="font-size:13px;color:var(--muted);font-family:'DM Mono',monospace">${s.idx+1} / ${s.words.length}</span>
+      <span style="font-size:13px;color:var(--accent);font-family:'DM Mono',monospace">✅ ${s.score}</span>
+    </div>
+    <div class="prog"><div class="progf" style="width:${pct}%"></div></div>
+  `;
+
+  if (s.type === 'flashcard') {
+    if (!s.flipped) {
+      h += `
+        <div class="excard" onclick="flipCard()" style="cursor:pointer;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div class="exkr">${w.korean}</div>
+          ${w.romanization ? `<div class="exrom">${w.romanization}</div>` : ''}
+          <span class="ptag" style="background:${p.color||'#888'}22;color:${p.color||'#888'};border:1px solid ${p.color||'#888'}44;margin-top:14px">${p.emoji||'?'} ${p.label||w.pos}</span>
+          <div style="color:var(--accent);font-size:12px;margin-top:18px;font-family:'DM Mono',monospace">TAP TO REVEAL</div>
+        </div>
+        <div style="text-align:center;margin-bottom:14px">${abtn(w.korean)}</div>
+      `;
+    } else {
+      h += `
+        <div class="excard" style="min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div class="exen">${w.english}</div>
+          ${w.notes ? `<div style="font-size:13px;color:var(--muted);margin-top:10px">💡 ${w.notes}</div>` : ''}
+          <div style="margin-top:14px">${abtn(w.korean)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn btn-d" onclick="exAns(false)">❌ Didn't know</button>
+          <button class="btn btn-g" onclick="exAns(true)">✅ Got it!</button>
+        </div>
+      `;
+    }
+  } else if (s.type === 'mc') {
+    const pool = words.length >= 4 ? words : [...words,...words,...words,...words];
+    if (!s.mcOpts) s.mcOpts = shuffle([w, ...shuffle(pool.filter(x => x.id !== w.id)).slice(0, 3)]);
+    h += `
+      <div class="excard" style="min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div class="exkr">${w.korean}</div>
+        ${w.romanization ? `<div class="exrom">${w.romanization}</div>` : ''}
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'DM Mono',monospace">CHOOSE THE CORRECT MEANING:</p>
+    `;
+    s.mcOpts.forEach(opt => {
+      let cls = 'mcopt';
+      if (s.answered) { if (opt.id === w.id) cls += ' ok'; else if (opt.id === s.chosen) cls += ' no'; }
+      h += `<button class="${cls}" ${s.answered?'disabled':''} onclick="mcPick('${opt.id}')">${opt.english}</button>`;
+    });
+    if (s.answered) h += `<div class="rbanner ${s.ok?'rok':'rno'}">${s.ok?'🎉 Correct!':`❌ Answer: ${w.english}`}</div><div style="text-align:center;margin-bottom:12px">${abtn(w.korean)}</div><button class="btn btn-g" onclick="exNext()">Next →</button>`;
+  } else if (s.type === 'typing') {
+    h += `
+      <div class="excard" style="min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div class="exkr">${w.korean}</div>
+        ${w.romanization ? `<div class="exrom">${w.romanization}</div>` : ''}
+        <span class="ptag" style="background:${p.color||'#888'}22;color:${p.color||'#888'};border:1px solid ${p.color||'#888'}44;margin-top:14px">${p.emoji||'?'} ${p.label||w.pos}</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace">TYPE THE ENGLISH MEANING:</p>
+    `;
+    if (!s.answered) h += `<input type="text" id="ti" placeholder="Type in English..." style="margin-bottom:10px" autocomplete="off"><button class="btn btn-g" onclick="chkTyping()">Check ✓</button>`;
+    else h += `<div class="rbanner ${s.ok?'rok':'rno'}">${s.ok?'🎉 Correct!':`❌ Answer: ${w.english}`}</div><div style="text-align:center;margin-bottom:12px">${abtn(w.korean)}</div><button class="btn btn-g" onclick="exNext()">Next →</button>`;
+  } else if (s.type === 'kr') {
+    h += `
+      <div class="excard" style="min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div class="exen">${w.english}</div>
+        ${w.notes ? `<div style="font-size:13px;color:var(--muted);margin-top:8px">💡 ${w.notes}</div>` : ''}
+        <span class="ptag" style="background:${p.color||'#888'}22;color:${p.color||'#888'};border:1px solid ${p.color||'#888'}44;margin-top:14px">${p.emoji||'?'} ${p.label||w.pos}</span>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace">TYPE THE KOREAN WORD:</p>
+    `;
+    if (!s.answered) h += `<input type="text" id="ki" placeholder="한국어로 입력..." style="margin-bottom:10px;font-size:20px" autocomplete="off"><button class="btn btn-g" onclick="chkKR()">Check ✓</button>`;
+    else h += `<div class="rbanner ${s.ok?'rok':'rno'}">${s.ok?'🎉 Correct!':`❌ Answer: ${w.korean}${w.romanization?` (${w.romanization})`:''}`}</div><div style="text-align:center;margin-bottom:12px">${abtn(w.korean)}</div><button class="btn btn-g" onclick="exNext()">Next →</button>`;
+  }
+
+  document.getElementById('ex-sess').innerHTML = h;
+  if (s.type === 'typing' && !s.answered) { const el = document.getElementById('ti'); if(el){ el.focus(); el.onkeydown = e => { if(e.key==='Enter') chkTyping(); }; } }
+  if (s.type === 'kr' && !s.answered) { const el = document.getElementById('ki'); if(el){ el.focus(); el.onkeydown = e => { if(e.key==='Enter') chkKR(); }; } }
+}
+
+function flipCard() { exState.flipped = true; renderExCard(); }
+
+function exAns(ok) {
+  updMastery(exState.words[exState.idx].id, ok);
+  if (ok) exState.score++;
+  exState.total++; exState.idx++;
+  exState.flipped = false; exState.answered = false; exState.mcOpts = null;
+  renderExCard();
+}
+
+function mcPick(id) {
+  const w = exState.words[exState.idx];
+  const ok = id === w.id;
+  exState.chosen = id; exState.ok = ok; exState.answered = true;
+  if (ok) exState.score++;
+  exState.total++;
+  updMastery(w.id, ok);
+  renderExCard();
+}
+
+function chkTyping() {
+  const ans = (document.getElementById('ti')?.value || '').trim().toLowerCase();
+  const w = exState.words[exState.idx];
+  const ok = ans === w.english.toLowerCase();
+  exState.ok = ok; exState.answered = true;
+  if (ok) exState.score++;
+  exState.total++;
+  updMastery(w.id, ok);
+  renderExCard();
+}
+
+function chkKR() {
+  const ans = (document.getElementById('ki')?.value || '').trim();
+  const w = exState.words[exState.idx];
+  const ok = ans === w.korean;
+  exState.ok = ok; exState.answered = true;
+  if (ok) exState.score++;
+  exState.total++;
+  updMastery(w.id, ok);
+  renderExCard();
+}
+
+function exNext() {
+  exState.idx++; exState.answered = false; exState.flipped = false; exState.mcOpts = null;
+  renderExCard();
+}
+
+function renderExDone() {
+  const s = exState;
+  const pct = s.total > 0 ? Math.round((s.score / s.total) * 100) : 0;
+  document.getElementById('ex-sess').innerHTML = `
+    <div class="done">
+      <div style="font-size:64px;margin-bottom:16px">${pct>=80?'🏆':pct>=50?'⭐':'💪'}</div>
+      <div class="donescore">${s.score}<span style="font-size:40px;color:var(--muted)">/${s.total}</span></div>
+      <div class="donelbl">${pct}% correct</div>
+      <button class="btn btn-g" onclick="startEx('${s.type}')" style="margin-bottom:10px">🔄 Try Again</button>
+      <button class="btn btn-s" onclick="renderExPick()">Choose Different Exercise</button>
+    </div>
+  `;
+}
+
+function updMastery(id, ok) {
+  const i = words.findIndex(w => w.id === id);
+  if (i < 0) return;
+  words[i].mastery = Math.max(0, Math.min(5, words[i].mastery + (ok ? 1 : -1)));
+  saveWords();
+}
+
+/* ═══════ STATS ═══════ */
+function renderStats() {
+  document.getElementById('st-tot').textContent = words.length;
+  document.getElementById('st-mas').textContent = words.filter(w => w.mastery >= 4).length;
+  document.getElementById('st-new').textContent = words.filter(w => w.mastery === 0).length;
+
+  const posEl = document.getElementById('pos-chart');
+  const pc = Object.entries(POS).map(([k,v]) => ({ ...v, count: words.filter(w => w.pos===k).length })).filter(p => p.count > 0).sort((a,b) => b.count-a.count);
+  if (!pc.length) { posEl.innerHTML = `<div class="empty" style="padding:16px 0"><div class="ei">📊</div>No data yet</div>`; }
+  else {
+    const mx = Math.max(...pc.map(p => p.count));
+    posEl.innerHTML = pc.map(p => `<div class="brow"><div class="blabel"><span>${p.emoji} ${p.label}</span><span style="color:${p.color}">${p.count}</span></div><div class="btrack"><div class="bfill" style="width:${(p.count/mx)*100}%;background:${p.color}"></div></div></div>`).join('');
+  }
+
+  const mEl = document.getElementById('mast-chart');
+  const mc2 = [0,1,2,3,4,5].map(m => ({ label: ML[m], color: MC[m], count: words.filter(w => w.mastery===m).length }));
+  const mx2 = Math.max(...mc2.map(m => m.count), 1);
+  mEl.innerHTML = mc2.map(m => `<div class="brow"><div class="blabel"><span>${m.label}</span><span style="color:${m.color}">${m.count}</span></div><div class="btrack"><div class="bfill" style="width:${(m.count/mx2)*100}%;background:${m.color}"></div></div></div>`).join('');
+}
+
+/* ═══════ TOAST ═══════ */
+let tt;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ═══════ INIT ═══════ */
+if (isAuth()) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').classList.add('visible');
+  loadWords(); populatePOSGuide(); renderHome();
+}
+document.getElementById('login-pw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>
